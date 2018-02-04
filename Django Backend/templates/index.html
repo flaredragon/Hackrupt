@@ -1,0 +1,22 @@
+<html>
+    {% load staticfiles %}
+    {% load i18n %}
+    <head>
+            <script src = "{% static 'js/jquery.min.js' %}"></script>
+            <!-- Materialize -->
+    </head>
+    <body>
+            <form method="post" name='industryform'>
+            {% csrf_token %}
+            {{  form.as_p }}
+            </form>
+    </body>
+
+    <script>
+        $(document).ready( function() {
+            $("form[name=industryform] input").on("change", function() {
+              $("form[name=industryform").submit();
+            })
+          });
+    </script>
+</html>
