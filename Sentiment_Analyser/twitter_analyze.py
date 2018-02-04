@@ -1,9 +1,5 @@
-# TODO-get more tweets 
-# TODO-tweets from reliable accounts
-# TODO-take into account retweets,likes,time,followers
-# analyze google searches to predict stock market
-# remove tweets from other languages?
 from __future__ import division
+import operator
 import tweepy
 import shutil
 from tweepy.streaming import StreamListener
@@ -11,11 +7,9 @@ from tweepy import OAuthHandler
 from tweepy import Stream
 import json
 import pandas as pd
-# import matplotlib.pyplot as plt
 import csv 
 from textblob import TextBlob
 import numpy as np
-# from pylab import *
 import os.path
 
 consumer_key = "5Yi6aDwjawLab89gmnEJoB6tG"
@@ -27,17 +21,26 @@ class twitter_analyze:
 
 	def __init__(self):
 		pass
-		
-	# current feelings about stock
-	# Todo plot according to location
-	def analyze_feelings(self, stock):
-		
-		# tweets_file = 'data/%s_tweets.csv' %stock
+	
+	def sentiment(self, var):
 
-		# if not os.path.isfile(tweets_file) : 
+		if var == 1:
+			stock = '$GS'
+		elif var == 2:
+			stock = '$KO'
+		elif var == 3:
+			stock = '$DIS'
+		elif var == 4:
+			stock = '$WMT'
+		elif var == 5:
+			stock = '$VZ'
+
+		sentiment_list = self.analyze_feelings(stock)
+		return max(sentiment_list.iteritems(), key=operator.itemgetter(1))[0]
+	
+	def analyze_feelings(self, stock):
+
 		tweets = self.analyze_stock(stock)
-		
-		# tweets = pd.read_csv('data/%s_tweets.csv' %stock)
 
 		sentiment = []
 		for index, row in tweets.iterrows():
@@ -55,22 +58,10 @@ class twitter_analyze:
 				sentiment.append('positive')
 
 		tweets['sentiment'] = sentiment
-		# tweets['sentiment'].value_counts().plot(kind='bar')
-		# tweets['sentiment'].value_counts().plot(kind='pie')
-		# plt.show()
-		tweets.to_csv('./%s_tweets.csv' % stock)
-		counts_list = []
-		counts_list.append(tweets['sentiment'].value_counts()['positive'])
-		counts_list.append(tweets['sentiment'].value_counts()['negative'])
-		counts_list.append(tweets['sentiment'].value_counts()['neutral'])
-
-		# file_feelings = ('data/%s_feelings.csv' % stock)
-		# cur_path = os.getcwd()
-		# abs_path_feelings = cur_path+'/'+file_feelings
-		# with open(file_feelings, "w") as output:
-		#     writer = csv.writer(output, lineterminator='\n')
-		#     for val in counts_list:
-		#         writer.writerow([val])  
+		counts_list = {}
+		counts_list['positive'] = tweets['sentiment'].value_counts()['positive']
+		counts_list['neutral'] = tweets['sentiment'].value_counts()['neutral']
+		counts_list['negative'] = tweets['sentiment'].value_counts()['negative']
 
 		return counts_list
 
@@ -92,11 +83,10 @@ class twitter_analyze:
 			tweet_dates.append(tweet.created_at)
 
 		tweets['text'] = np.array(tweet_text)
-		# tweets['analysis'] = np.array(analysis_list)
 		tweets['polarity'] = np.array(polarity_list)
 		tweets['subjectivity'] = np.array(subjectivity_list)
 		tweets['date'] = np.array(tweet_dates)
-		# tweets = tweets.sort_values(by=['subjectivity'], ascending=0)
+
 		return tweets
 
 	def get_tweets(self, stock):
@@ -110,34 +100,26 @@ class twitter_analyze:
 		alltweets.extend(public_tweets)
 		oldest = alltweets[-1].id - 1
 
-		# Todo date constraint?
-
-		#keep grabbing tweets until there are no tweets left to grab
 		while len(public_tweets) > 0:
-		    print "getting tweets before %s" % (oldest)
-		    # filter by users too, todo
+		    # print "getting tweets before %s" % (oldest)
+		    
 		    public_tweets = api.search(stock,count=200,max_id=oldest)
-		    
-		    #save most recent tweets
 		    alltweets.extend(public_tweets)
-		    
-		    #update the id of the oldest tweet less one
 		    oldest = alltweets[-1].id - 1
 		    
-		    print "...%s tweets downloaded so far" % (len(alltweets))
+		    # print "...%s tweets downloaded so far" % (len(alltweets))
 
 		    if len(alltweets) > 500:
 		    	break
 
-		#transform the tweepy tweets into a 2D array that will populate the csv 
 		outtweets = [[tweet.id_str, tweet.created_at, tweet.text.encode("utf-8")] for tweet in public_tweets]
-		print outtweets
+		# print outtweets
 		return alltweets
 
 if __name__ == "__main__":
-	analyze = twitter_analyze()
-	# analyze.analyze_stock('$AAPL')
-	# print analyze.analyze_feelings('$TSLA')
-	print analyze.analyze_feelings('$KO')
-	# analyze.analyze_feelings('$AAPL')
-	# analyze.analyze_feelings('$GOOGL')
+
+	# analyze = twitter_analyze()
+	# var = 2 
+	# print analyze.sentiment(var)
+	
+
